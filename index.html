@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -69,4 +70,77 @@
 
     <script src="script.js"></script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="student-info">
+            <h2>Поблагодарим автора за создание калькулятора</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>ФИО:</strong><br>
+                    Дец Анна Андреевна
+                </div>
+                <div class="info-item">
+                    <strong>Курс:</strong><br>
+                    4
+                </div>
+                <div class="info-item">
+                    <strong>Группа:</strong><br>
+                    4
+                </div>
+                <div class="info-item">
+                    <strong>Год:</strong><br>
+                    2025
+                </div>
+            </div>
+        </div>
+
+        <div class="calculator">
+            <h2>Калькулятор</h2>
+            
+            <div class="range-info">
+                <strong>Диапазон: от -1 000 000 000 000 до +1 000 000 000 000</strong>
+            </div>
+            
+            <div class="input-group">
+                <label for="number1">Первое число:</label>
+                <input type="text" id="number1" placeholder="Введите число">
+                <div class="error" id="error1"></div>
+            </div>
+
+            <div class="input-group">
+                <label for="number2">Второе число:</label>
+                <input type="text" id="number2" placeholder="Введите число">
+                <div class="error" id="error2"></div>
+            </div>
+
+            <div class="operations">
+                <h3>Выберите операцию:</h3>
+                <div class="operation-buttons">
+                    <button class="operation-btn" data-operation="addition">+ Сложение</button>
+                    <button class="operation-btn" data-operation="subtraction">− Вычитание</button>
+                </div>
+            </div>
+
+            <button class="calculate-btn" id="calculateBtn" disabled>Вычислить</button>
+
+            <div class="result" id="resultContainer">
+                <h3>Результат:</h3>
+                <div class="result-value" id="resultValue">—</div>
+                <div class="calculation-steps" id="calculationSteps"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+>>>>>>> 2ef1b9ce0387536ddd709cd2ac0e8a2464656f3e
 </html>
