@@ -15,8 +15,9 @@ body {
 }
 
 .container {
-    max-width: 50%;
-    width: 100%;
+    width: 50%;
+    max-width: 800px;
+    min-width: 500px;
 }
 
 .student-info {
@@ -190,4 +191,41 @@ body {
     font-size: 14px;
     color: #6c757d;
     margin-top: 5px;
+}
+
+@media (max-width: 1024px) {
+    .container {
+        width: 90%;
+        min-width: unset; 
+        max-width: 500px; 
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 95%;
+        max-width: 500px;
+    }
+    
+    body {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 360px) {
+    .calculator {
+        padding: 15px;
+    }
+    
+    .operation-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .result-value {
+        font-size: 18px;
+    }
 }
