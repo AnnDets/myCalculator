@@ -2,7 +2,7 @@ class Calculator {
     constructor() {
         this.MIN_VALUE = -1000000000000;
         this.MAX_VALUE = 1000000000000;
-        this.DECIMAL_PLACES = 6; 
+        this.DECIMAL_PLACES = 6;
         
         this.number1Input = document.getElementById('number1');
         this.number2Input = document.getElementById('number2');
@@ -86,14 +86,18 @@ class Calculator {
     }
 
     normalizeInput(value) {
-        let normalized = value
-            .replace(/,/g, '.')
-            .replace(/[^\d.-]/g, '');
+        let cleaned = value.replace(/[^\d\s.,-]/g, '');
+        
+        let normalized = cleaned.replace(/,/g, '.');
         
         if (normalized.includes('-')) {
             const parts = normalized.split('-');
             if (parts.length > 2) {
                 normalized = '-' + parts.slice(1).join('').replace(/-/g, '');
+            }
+            if (normalized.lastIndexOf('-') > 0) {
+                normalized = normalized.replace(/-/g, '');
+                normalized = '-' + normalized;
             }
         }
         
@@ -105,11 +109,71 @@ class Calculator {
         return normalized;
     }
 
+    isValidSpacing(value) {
+        if (value.trim() === '') return true;
+        
+        const parts = value.split('.');
+        const integerPart = parts[0];
+        
+        if (integerPart && !this.isValidIntegerSpacing(integerPart)) {
+            return false;
+        }
+        
+        if (parts.length > 1 && parts[1].includes(' ')) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    isValidIntegerSpacing(integerStr) {
+        let str = integerStr;
+        const hasMinus = str.startsWith('-');
+        if (hasMinus) {
+            str = str.substring(1);
+        }
+        
+        if (!str.includes(' ')) {
+            return true;
+        }
+        
+        const groups = str.split(' ').filter(group => group !== '');
+        
+        if (str.includes('  ')) {
+            return false;
+        }
+        
+        for (let i = 0; i < groups.length; i++) {
+            const group = groups[i];
+            
+            if (i === 0) {
+                if (group.length < 1 || group.length > 3) {
+                    return false;
+                }
+            } else {
+                if (group.length !== 3) {
+                    return false;
+                }
+            }
+            
+            if (!/^\d+$/.test(group)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+
     handleInput(inputElement) {
-        const normalizedValue = this.normalizeInput(inputElement.value);
-        if (normalizedValue !== inputElement.value) {
+        const originalValue = inputElement.value;
+        const normalizedValue = this.normalizeInput(originalValue);
+        
+        if (normalizedValue !== originalValue) {
             inputElement.value = normalizedValue;
         }
+        
+        this.validateInputs();
     }
 
     parseNumber(value) {
@@ -220,12 +284,152 @@ class Calculator {
         }
     }
 
+    multiplyNumbers(num1, num2) {
+        if (num1.isInteger && num2.isInteger) {
+            const result = num1.integer * num2.integer;
+            return {
+                integer: result,
+                decimal: '0',
+                isInteger: true
+            };
+        } else {
+            const totalDecimalPlaces = num1.decimal.length + num2.decimal.length;
+            const num1Total = BigInt(num1.integer.toString() + num1.decimal) * (num1.integer >= 0n ? 1n : -1n);
+            const num2Total = BigInt(num2.integer.toString() + num2.decimal) * (num2.integer >= 0n ? 1n : -1n);
+            
+            let result = num1Total * num2Total;
+            const isNegative = result < 0n;
+            if (isNegative) result = -result;
+            
+            let resultStr = result.toString().padStart(totalDecimalPlaces + 1, '0');
+            const integerPart = resultStr.slice(0, -totalDecimalPlaces) || '0';
+            let decimalPart = resultStr.slice(-totalDecimalPlaces);
+            
+            if (decimalPart.length > this.DECIMAL_PLACES) {
+                decimalPart = this.roundDecimal(decimalPart, this.DECIMAL_PLACES);
+            } else {
+                decimalPart = decimalPart.padEnd(this.DECIMAL_PLACES, '0').substring(0, this.DECIMAL_PLACES);
+            }
+            
+            return {
+                integer: BigInt((isNegative ? '-' : '') + integerPart),
+                decimal: decimalPart,
+                isInteger: decimalPart === '0'
+            };
+        }
+    }
+
+    divideNumbers(num1, num2) {
+        if (num2.integer === 0n && num2.decimal === '0') {
+            throw new Error('Деление на ноль');
+        }
+
+        const num1Value = this.toNumber(num1);
+        const num2Value = this.toNumber(num2);
+        
+        let result = num1Value / num2Value;
+        
+        result = Math.round(result * 1000000) / 1000000;
+        
+        if (result < this.MIN_VALUE || result > this.MAX_VALUE) {
+            throw new Error('Переполнение');
+        }
+        
+        return this.numberToResultObject(result);
+    }
+
+    numberToResultObject(number) {
+        if (number === 0) {
+            return {
+                integer: 0n,
+                decimal: '0',
+                isInteger: true
+            };
+        }
+        
+        const isNegative = number < 0;
+        const absoluteNumber = Math.abs(number);
+        
+        const integerPart = Math.floor(absoluteNumber);
+        let decimalPart = absoluteNumber - integerPart;
+        
+        let decimalStr = '';
+        if (decimalPart > 0) {
+            let decimalInt = Math.round(decimalPart * 1000000);
+            
+            if (decimalInt === 1000000) {
+                decimalInt = 0;
+                return this.numberToResultObject(
+                    (isNegative ? -1 : 1) * (integerPart + 1)
+                );
+            }
+            
+            decimalStr = decimalInt.toString().padStart(6, '0');
+            
+            while (decimalStr.endsWith('0')) {
+                decimalStr = decimalStr.slice(0, -1);
+            }
+        } else {
+            decimalStr = '0';
+        }
+        
+        return {
+            integer: BigInt((isNegative ? '-' : '') + integerPart.toString()),
+            decimal: decimalStr,
+            isInteger: decimalStr === '0'
+        };
+    }
+
+    mathRound(number, scale) {
+        const absNumber = number < 0n ? -number : number;
+        const remainder = absNumber % scale;
+        
+        if (remainder * 2n >= scale) {
+            return number < 0n ? 
+                   (number - (scale - remainder)) / scale : 
+                   (number + (scale - remainder)) / scale;
+        } else {
+            return number / scale;
+        }
+    }
+
+    roundDecimal(decimalStr, maxLength) {
+        if (decimalStr.length <= maxLength) {
+            return decimalStr;
+        }
+        
+        const toRound = decimalStr.substring(0, maxLength + 1);
+        const lastDigit = parseInt(toRound.charAt(maxLength));
+        let rounded = toRound.substring(0, maxLength);
+        
+        if (lastDigit >= 5) {
+            let carry = 1;
+            let result = '';
+            for (let i = maxLength - 1; i >= 0; i--) {
+                let digit = parseInt(rounded.charAt(i)) + carry;
+                carry = Math.floor(digit / 10);
+                result = (digit % 10) + result;
+            }
+            if (carry > 0) {
+                result = carry + result;
+            }
+            return result.padStart(maxLength, '0').substring(0, maxLength);
+        } else {
+            return rounded;
+        }
+    }
+
     validateNumber(value) {
         if (value === '' || value === '-' || value === '.') {
             return { isValid: false, error: 'Введите число' };
         }
         
-        const numObj = this.parseNumber(value);
+        if (!this.isValidSpacing(value)) {
+            return { isValid: false, error: 'Неправильная расстановка пробелов' };
+        }
+        
+        const valueWithoutSpaces = value.replace(/\s/g, '');
+        const numObj = this.parseNumber(valueWithoutSpaces);
         
         if (!numObj) {
             return { isValid: false, error: 'Неверный формат числа' };
@@ -260,28 +464,38 @@ class Calculator {
     formatNumber(numObj) {
         let integerStr = numObj.integer.toString();
         const isNegative = integerStr.startsWith('-');
+        
         if (isNegative) {
             integerStr = integerStr.substring(1);
         }
         
-        // Форматируем целую часть с пробелами
-        integerStr = integerStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        if (integerStr === '') {
+            integerStr = '0';
+        }
         
-        let result = integerStr;
+        let formattedInteger = '';
+        let count = 0;
         
-        // Добавляем дробную часть если есть
-        if (numObj.decimal !== '0') {
-            let decimal = numObj.decimal;
-            // Убираем нули в конце дробной части
-            while (decimal.endsWith('0')) {
-                decimal = decimal.slice(0, -1);
-            }
-            if (decimal.length > 0) {
-                result += '.' + decimal;
+        for (let i = integerStr.length - 1; i >= 0; i--) {
+            formattedInteger = integerStr[i] + formattedInteger;
+            count++;
+            if (count % 3 === 0 && i !== 0) {
+                formattedInteger = ' ' + formattedInteger;
             }
         }
         
-        // Добавляем знак минус для отрицательных чисел
+        let decimalPart = numObj.decimal;
+        
+        while (decimalPart.endsWith('0')) {
+            decimalPart = decimalPart.slice(0, -1);
+        }
+        
+        let result = formattedInteger;
+        
+        if (decimalPart.length > 0) {
+            result += '.' + decimalPart;
+        }
+        
         if (isNegative) {
             result = '-' + result;
         }
@@ -317,6 +531,14 @@ class Calculator {
                     result = this.subtractNumbers(num1, num2);
                     explanation = `Разность ${this.formatNumber(num1)} и ${this.formatNumber(num2)}`;
                     break;
+                case 'multiplication':
+                    result = this.multiplyNumbers(num1, num2);
+                    explanation = `Произведение ${this.formatNumber(num1)} и ${this.formatNumber(num2)}`;
+                    break;
+                case 'division':
+                    result = this.divideNumbers(num1, num2);
+                    explanation = `Частное ${this.formatNumber(num1)} и ${this.formatNumber(num2)}`;
+                    break;
                 default:
                     throw new Error('Неизвестная операция');
             }
@@ -331,9 +553,13 @@ class Calculator {
                 this.calculationSteps.textContent = `${explanation} = ${this.formatNumber(result)}`;
             }
         } catch (error) {
-            this.resultValue.textContent = 'ОШИБКА!';
+            if (error.message === 'Деление на ноль') {
+                this.resultValue.textContent = 'ОШИБКА: Деление на ноль!';
+            } else {
+                this.resultValue.textContent = 'ОШИБКА!';
+            }
             this.resultValue.style.color = '#dc3545';
-            this.calculationSteps.textContent = 'Произошла ошибка при вычислении';
+            this.calculationSteps.textContent = error.message || 'Произошла ошибка при вычислении';
         }
     }
 }

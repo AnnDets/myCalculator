@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -15,9 +15,28 @@ body {
 }
 
 .container {
-    width: 50%;
+    width: 50vw;
     max-width: 800px;
     min-width: 500px;
+}
+
+@media (max-width: 1024px) {
+    .container {
+        width: 90vw;
+        min-width: unset;
+        max-width: 500px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 95vw;
+        max-width: 500px;
+    }
+    
+    body {
+        padding: 10px;
+    }
 }
 
 .student-info {
@@ -124,6 +143,12 @@ body {
     gap: 10px;
 }
 
+@media (max-width: 480px) {
+    .operation-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
 .operation-btn {
     padding: 15px;
     font-size: 16px;
@@ -193,23 +218,16 @@ body {
     margin-top: 5px;
 }
 
-@media (max-width: 1024px) {
-    .container {
-        width: 90%;
-        min-width: unset; 
-        max-width: 500px; 
-    }
+.hints {
+    background: #e7f3ff;
+    padding: 10px;
+    border-radius: 5px;
 }
 
-@media (max-width: 480px) {
-    .container {
-        width: 95%;
-        max-width: 500px;
-    }
-    
-    body {
-        padding: 10px;
-    }
+.hint {
+    font-size: 12px;
+    color: #555;
+    margin: 3px 0;
 }
 
 @media (max-width: 360px) {
