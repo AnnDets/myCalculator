@@ -216,73 +216,101 @@ class Calculator {
         return integer + (numObj.integer >= 0n ? decimal : -decimal);
     }
 
-    addNumbers(num1, num2) {
-        if (num1.isInteger && num2.isInteger) {
-            const result = num1.integer + num2.integer;
-            return {
-                integer: result,
-                decimal: '0',
-                isInteger: true
-            };
-        } else {
-            const maxDecimalLength = Math.max(num1.decimal.length, num2.decimal.length);
-            const decimal1 = num1.decimal.padEnd(maxDecimalLength, '0');
-            const decimal2 = num2.decimal.padEnd(maxDecimalLength, '0');
-            
-            const num1Total = BigInt(num1.integer.toString() + decimal1) * (num1.integer >= 0n ? 1n : -1n);
-            const num2Total = BigInt(num2.integer.toString() + decimal2) * (num2.integer >= 0n ? 1n : -1n);
-            
-            let result = num1Total + num2Total;
-            const isNegative = result < 0n;
-            if (isNegative) result = -result;
-            
-            const resultStr = result.toString().padStart(maxDecimalLength + 1, '0');
-            const integerPart = resultStr.slice(0, -maxDecimalLength) || '0';
-            let decimalPart = resultStr.slice(-maxDecimalLength);
-            
-            decimalPart = decimalPart.substring(0, this.DECIMAL_PLACES);
-            
-            return {
-                integer: BigInt((isNegative ? '-' : '') + integerPart),
-                decimal: decimalPart,
-                isInteger: decimalPart === '0'
-            };
-        }
+addNumbers(num1, num2) {
+    if (num1.isInteger && num2.isInteger) {
+        const result = num1.integer + num2.integer;
+        return {
+            integer: result,
+            decimal: '0',
+            isInteger: true
+        };
+    } else {
+        const maxDecimalLength = Math.max(num1.decimal.length, num2.decimal.length);
+        const decimal1 = num1.decimal.padEnd(maxDecimalLength, '0');
+        const decimal2 = num2.decimal.padEnd(maxDecimalLength, '0');
+        
+        // ПРАВИЛЬНО обрабатываем знаки для BigInt
+        const num1Sign = num1.integer >= 0n ? 1n : -1n;
+        const num2Sign = num2.integer >= 0n ? 1n : -1n;
+        
+        // Берем абсолютные значения целых частей
+        const absNum1Integer = num1.integer < 0n ? -num1.integer : num1.integer;
+        const absNum2Integer = num2.integer < 0n ? -num2.integer : num2.integer;
+        
+        // Создаем BigInt с учетом знаков и десятичных частей
+        const num1Total = (absNum1Integer * 10n**BigInt(maxDecimalLength) + BigInt(decimal1)) * num1Sign;
+        const num2Total = (absNum2Integer * 10n**BigInt(maxDecimalLength) + BigInt(decimal2)) * num2Sign;
+        
+        let result = num1Total + num2Total;
+        const isNegative = result < 0n;
+        if (isNegative) result = -result;
+        
+        const resultStr = result.toString().padStart(maxDecimalLength + 1, '0');
+        const integerPart = resultStr.slice(0, -maxDecimalLength) || '0';
+        let decimalPart = resultStr.slice(-maxDecimalLength);
+        
+        decimalPart = decimalPart.substring(0, this.DECIMAL_PLACES);
+        
+        return {
+            integer: BigInt((isNegative ? '-' : '') + integerPart),
+            decimal: decimalPart,
+            isInteger: decimalPart === '0'
+        };
     }
+}
 
-    subtractNumbers(num1, num2) {
-        if (num1.isInteger && num2.isInteger) {
-            const result = num1.integer - num2.integer;
-            return {
-                integer: result,
-                decimal: '0',
-                isInteger: true
-            };
-        } else {
-            const maxDecimalLength = Math.max(num1.decimal.length, num2.decimal.length);
-            const decimal1 = num1.decimal.padEnd(maxDecimalLength, '0');
-            const decimal2 = num2.decimal.padEnd(maxDecimalLength, '0');
-            
-            const num1Total = BigInt(num1.integer.toString() + decimal1) * (num1.integer >= 0n ? 1n : -1n);
-            const num2Total = BigInt(num2.integer.toString() + decimal2) * (num2.integer >= 0n ? 1n : -1n);
-            
-            let result = num1Total - num2Total;
-            const isNegative = result < 0n;
-            if (isNegative) result = -result;
-            
-            const resultStr = result.toString().padStart(maxDecimalLength + 1, '0');
-            const integerPart = resultStr.slice(0, -maxDecimalLength) || '0';
-            let decimalPart = resultStr.slice(-maxDecimalLength);
-            
-            decimalPart = decimalPart.substring(0, this.DECIMAL_PLACES);
-            
-            return {
-                integer: BigInt((isNegative ? '-' : '') + integerPart),
-                decimal: decimalPart,
-                isInteger: decimalPart === '0'
-            };
+subtractNumbers(num1, num2) {
+    if (num1.isInteger && num2.isInteger) {
+        const result = num1.integer - num2.integer;
+        return {
+            integer: result,
+            decimal: '0',
+            isInteger: true
+        };
+    } else {
+        const maxDecimalLength = Math.max(num1.decimal.length, num2.decimal.length);
+        const decimal1 = num1.decimal.padEnd(maxDecimalLength, '0');
+        const decimal2 = num2.decimal.padEnd(maxDecimalLength, '0');
+        
+        const num1Sign = num1.integer >= 0n ? 1n : -1n;
+        const num2Sign = num2.integer >= 0n ? 1n : -1n;
+        
+        const absNum1Integer = num1.integer < 0n ? -num1.integer : num1.integer;
+        const absNum2Integer = num2.integer < 0n ? -num2.integer : num2.integer;
+        
+        const num1Total = (absNum1Integer * 10n**BigInt(maxDecimalLength) + BigInt(decimal1)) * num1Sign;
+        const num2Total = (absNum2Integer * 10n**BigInt(maxDecimalLength) + BigInt(decimal2)) * num2Sign;
+        
+        let result = num1Total - num2Total;
+        const isNegative = result < 0n;
+        const absResult = isNegative ? -result : result;
+        
+        const resultStr = absResult.toString().padStart(maxDecimalLength + 1, '0');
+        let integerPart = resultStr.slice(0, -maxDecimalLength) || '0';
+        let decimalPart = resultStr.slice(-maxDecimalLength);
+        
+        // Убираем незначащие нули в дробной части
+        decimalPart = decimalPart.substring(0, this.DECIMAL_PLACES);
+        while (decimalPart.endsWith('0')) {
+            decimalPart = decimalPart.slice(0, -1);
         }
+        
+        // Для случаев когда результат между -1 и 0, принудительно ставим знак минус
+        let finalInteger;
+        if (integerPart === '0' && isNegative) {
+            // Используем -1 как маркер для отрицательных дробных чисел меньше 1
+            finalInteger = -1n;
+        } else {
+            finalInteger = BigInt((isNegative ? '-' : '') + integerPart);
+        }
+        
+        return {
+            integer: finalInteger,
+            decimal: decimalPart === '' ? '0' : decimalPart,
+            isInteger: decimalPart === '0' || decimalPart === ''
+        };
     }
+}
 
     multiplyNumbers(num1, num2) {
         if (num1.isInteger && num2.isInteger) {
@@ -461,47 +489,56 @@ class Calculator {
         this.validateInputs();
     }
 
-    formatNumber(numObj) {
-        let integerStr = numObj.integer.toString();
-        const isNegative = integerStr.startsWith('-');
-        
-        if (isNegative) {
-            integerStr = integerStr.substring(1);
-        }
-        
-        if (integerStr === '') {
-            integerStr = '0';
-        }
-        
-        let formattedInteger = '';
-        let count = 0;
-        
-        for (let i = integerStr.length - 1; i >= 0; i--) {
-            formattedInteger = integerStr[i] + formattedInteger;
-            count++;
-            if (count % 3 === 0 && i !== 0) {
-                formattedInteger = ' ' + formattedInteger;
-            }
-        }
-        
+formatNumber(numObj) {
+    // Специальная обработка для отрицательных дробных чисел меньше 1
+    if (numObj.integer === -1n && numObj.decimal !== '0') {
         let decimalPart = numObj.decimal;
-        
         while (decimalPart.endsWith('0')) {
             decimalPart = decimalPart.slice(0, -1);
         }
-        
-        let result = formattedInteger;
-        
-        if (decimalPart.length > 0) {
-            result += '.' + decimalPart;
-        }
-        
-        if (isNegative) {
-            result = '-' + result;
-        }
-        
-        return result;
+        return '-0.' + decimalPart;
     }
+    
+    let integerStr = numObj.integer.toString();
+    const isNegative = integerStr.startsWith('-');
+    
+    if (isNegative) {
+        integerStr = integerStr.substring(1);
+    }
+    
+    if (integerStr === '') {
+        integerStr = '0';
+    }
+    
+    let formattedInteger = '';
+    let count = 0;
+    
+    for (let i = integerStr.length - 1; i >= 0; i--) {
+        formattedInteger = integerStr[i] + formattedInteger;
+        count++;
+        if (count % 3 === 0 && i !== 0) {
+            formattedInteger = ' ' + formattedInteger;
+        }
+    }
+    
+    let decimalPart = numObj.decimal;
+    
+    while (decimalPart.endsWith('0')) {
+        decimalPart = decimalPart.slice(0, -1);
+    }
+    
+    let result = formattedInteger;
+    
+    if (decimalPart.length > 0) {
+        result += '.' + decimalPart;
+    }
+    
+    if (isNegative) {
+        result = '-' + result;
+    }
+    
+    return result;
+}
 
     checkOverflow(numObj) {
         const numValue = this.toNumber(numObj);
